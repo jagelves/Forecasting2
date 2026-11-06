@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Forecast Scoreboard Week 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one working column — upload → section tabs → outcomes → results summary → detail */
+:root{
+  --bg:#f6f7f4; --surface:#ffffff; --fg:#1c2420; --muted:#5d6a63; --line:#dde2dc;
+  --accent:#17583f; --accent-soft:#e3eee8; --gold:#9a7417; --gold-soft:#f5edd8;
+  --yes:#17583f; --no:#9b3b2e; --no-soft:#f6e4e0; --bar1:#8fa69a; --bar2:#5f8f78; --bar3:#17583f; --barc:#b8902a; --bar4:#6a5c96;
+  --f-display:"Fraunces",Georgia,serif; --f-body:"Public Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121715; --surface:#1a211e; --fg:#e6ebe7; --muted:#9aa8a0; --line:#2c3632;
+  --accent:#6cc39a; --accent-soft:#1f3329; --gold:#d9b25a; --gold-soft:#33291a;
+  --yes:#6cc39a; --no:#e88a7b; --no-soft:#3a2420; --bar1:#5d7268; --bar2:#4f9a78; --bar3:#6cc39a; --barc:#d9b25a; --bar4:#a99bd6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121715; --surface:#1a211e; --fg:#e6ebe7; --muted:#9aa8a0; --line:#2c3632;
+  --accent:#6cc39a; --accent-soft:#1f3329; --gold:#d9b25a; --gold-soft:#33291a;
+  --yes:#6cc39a; --no:#e88a7b; --no-soft:#3a2420; --bar1:#5d7268; --bar2:#4f9a78; --bar3:#6cc39a; --barc:#d9b25a; --bar4:#a99bd6; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+h1{font-family:var(--f-display);font-weight:600;font-size:2rem;margin:0;text-wrap:balance}
+h2{font-size:1.05rem;margin:0;font-weight:700}
+.sub{color:var(--muted);margin:4px 0 0;max-width:68ch}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+section{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:7px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,label.btn:focus-within,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent);font-weight:600}
+input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
+textarea{width:100%;min-height:110px;font-family:var(--f-mono);font-size:12px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:8px}
+.muted{color:var(--muted)} .small{font-size:.85rem}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);padding-bottom:0}
+.tab{border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:transparent;padding:9px 16px;margin-bottom:-1px;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--fg)}
+.tab .n{font-family:var(--f-mono);font-weight:400;font-size:.8rem;margin-left:6px;color:var(--muted)}
+.outcomes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.oc{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface)}
+.oc .q{min-width:0;font-size:.88rem}
+.oc .q b{font-family:var(--f-mono);font-weight:500;color:var(--muted);margin-right:6px}
+.oc .note{font-size:.8rem;color:var(--muted);text-align:right;flex:none}
+.seg{display:flex;flex:none;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:5px 10px;font-size:.82rem;background:transparent}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"].y{background:var(--accent-soft);color:var(--yes);font-weight:700}
+.seg button[aria-pressed="true"].n{background:var(--no-soft);color:var(--no);font-weight:700}
+.seg button[aria-pressed="true"].u{background:var(--bg);font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
+.tile .v{font-family:var(--f-mono);font-size:1.7rem;font-variant-numeric:tabular-nums}
+.tile .k{font-size:.82rem;font-weight:600}
+.tile .d{font-size:.78rem;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.gaps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.gap{border-left:3px solid var(--gold);padding:4px 12px}
+.gap .v{font-family:var(--f-mono);font-size:1.25rem}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--bg)}
+td.l,th.l{text-align:left;white-space:normal;min-width:170px}
+td.num{font-family:var(--f-mono)}
+tr.grp th{background:var(--surface);border-bottom:0;padding-bottom:0}
+th.gh{text-align:center;color:var(--fg);letter-spacing:.06em;border-bottom:2px solid var(--line)}
+th .thsub{text-transform:none;letter-spacing:0;font-weight:400}
+th.sep,td.sep{border-right:1px solid var(--line)}
+#qtable th,#qtable td{padding:7px 6px}
+#qtable td.l,#qtable th.l{min-width:150px}
+tr:last-child td{border-bottom:0}
+.best{color:var(--accent);font-weight:700}
+.res-y{color:var(--yes);font-weight:700}.res-n{color:var(--no);font-weight:700}.res-v{color:var(--gold);font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.two>div{min-width:0}
+svg text{fill:var(--fg);font-family:var(--f-body)}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+.err{color:var(--no)}
+@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">BUAD 5032 · Prediction exercise · Week 2 · Nov 9–15, 2026</div>
+    <h1>Forecast Scoreboard, Week 2</h1>
+    <p class="sub">Upload the week 2 Qualtrics export to score each round. Add the week 1 export to see who improved. Files are read in your browser and never leave your computer.</p>
+  </header>
+
+  <section aria-labelledby="h-load">
+    <h2 id="h-load">1. Responses</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row">
+        <label class="btn primary" for="file2">Load week 2 CSV<input id="file2" type="file" accept=".csv,text/csv"></label>
+        <span id="status2" class="small muted">No file loaded yet.</span>
+      </div>
+      <div class="row">
+        <label class="btn" for="file1">Load week 1 CSV (optional)<input id="file1" type="file" accept=".csv,text/csv"></label>
+        <span id="status1" class="small muted">Needed only for the week 1 vs week 2 comparison.</span>
+      </div>
+      <div class="small muted">Each student's latest submission counts. Team numbers are averaged across members who copied them. Sections are assigned by submission time (see <span style="font-family:var(--f-mono)">SECTIONS</span> at the top of the script).</div>
+    </div>
+  </section>
+
+  <div id="emptyState" class="panel empty">Load the week 2 Qualtrics export above to see each section's results.</div>
+
+  <div id="report" hidden style="display:flex;flex-direction:column;gap:28px">
+    <nav class="tabs" role="tablist" id="tabs" aria-label="Section"></nav>
+
+    <section aria-labelledby="h-out">
+      <div class="row" style="justify-content:space-between">
+        <h2 id="h-out">2. Outcomes</h2>
+        <span class="small muted" id="resolvedCount"></span>
+      </div>
+      <div class="outcomes" id="outcomes"></div>
+    </section>
+
+    <section aria-labelledby="h-res">
+      <h2 id="h-res">3. Results</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="panel" id="chartBox"></div>
+      <div class="gaps" id="gaps"></div>
+    </section>
+
+    <section aria-labelledby="h-q">
+      <h2 id="h-q">By question</h2>
+      <p class="small muted" style="margin:0">Left: the average probability of YES in each round. Middle: polarization and the outcome. Right: each round's Brier score; green marks the best. "Members → team" compares each team's agreed number with its members' Round 1 average, in points from 50%; "Private avg" is how far the average of the members' private Round 2 forecasts sat.</p>
+      <div class="scroll"><table id="qtable"></table></div>
+    </section>
+
+    <section aria-labelledby="h-src">
+      <h2 id="h-src">Sources in Round 3</h2>
+      <p class="small muted" style="margin:0">Each student's Round 3 score, grouped by the main source they ticked, next to the same students' Round 2 private score. The change shows what the research did for each group of students.</p>
+      <div class="scroll"><table id="stable"></table></div>
+    </section>
+
+    <section aria-labelledby="h-cal">
+      <h2 id="h-cal">Calibration</h2>
+      <p class="small muted" style="margin:0">When the class said 70%, did it happen 70% of the time? How to read it is under the chart.</p>
+      <div class="panel" id="calBox"></div>
+    </section>
+
+    <section aria-labelledby="h-wk" id="weekSection" hidden>
+      <h2 id="h-wk">Week 1 vs week 2</h2>
+      <p class="small muted" style="margin:0">Skill score = a student's Round 1 Brier minus their section's crowd Brier on the same questions. Negative means the student beat the crowd. It adjusts for how hard each week's questions were, so the two weeks can be compared.</p>
+      <div class="tiles" id="wkTiles"></div>
+      <div class="scroll"><table id="wkTable"></table></div>
+    </section>
+
+    <section aria-labelledby="h-rank">
+      <h2 id="h-rank">Rankings</h2>
+      <div class="panel" id="histBox"></div>
+      <div class="two">
+        <div><div class="eyebrow" style="margin-bottom:6px;line-height:2">Teams</div><div class="scroll"><table id="gtable"></table></div></div>
+        <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="eyebrow">Individuals</span><label class="small"><input type="checkbox" id="showNames"> Show names</label></div><div class="scroll"><table id="itable"></table></div></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ======================= SETTINGS: edit these as events resolve ======================= */
+
+// Sections, by the time the student STARTED the survey (StartDate, in the export's time zone;
+// Qualtrics exports default to Central time). A response belongs to the first section whose
+// "before" time it is earlier than.
+const SECTIONS = [
+  { id: "s1", name: "Section 1", before: "12:30" },
+  { id: "s2", name: "Section 2", before: "24:00" },
+];
+
+// Week 2 outcomes shared by both sections: 1 = Yes, 0 = No, null = not resolved yet.
+const OUTCOMES = [
+  null, // Q1  set per section below
+  null, // Q2  set per section below
+  null, // Q3  set per section below
+  null, // Q4  Football Manager 27 PC Metascore 78+ on Nov 15
+  null, // Q5  Low of 32°F or below at Newport News, Nov 9–15
+  null, // Q6  Richmond Marathon men's winner under 2:22:00
+  null, // Q7  Zable attendance vs Bucknell higher than vs Lafayette
+  null, // Q8  How to Rob a Bank IMDb 7.0+
+  null, // Q9  Ebenezer Letterboxd 3.5+
+  null, // Q10 Godzilla Minus Zero Letterboxd lower on Nov 15 than Nov 8
+];
+
+// Week 2 questions that resolve separately for each section (question number: outcome).
+const SECTION_OUTCOMES = {
+  s1: { 1: null, 2: null, 3: null },   // Q1 offices · Q2 cars · Q3 candy jar, after Section 1
+  s2: { 1: null, 2: null, 3: null },   // the same, after Section 2
+};
+
+// Week 1 outcomes, copied from the week 1 dashboard file (used only for the week 1 vs week 2 comparison).
+const WEEK1_OUTCOMES = [null, null, null, null, 1, 0, null, null, null, null];
+const WEEK1_SECTION_OUTCOMES = { s1: { 1: 1, 2: 1 }, s2: { 1: 0, 2: 0 } };
+
+/* ===================================================================================== */
+
+const QUESTIONS = [
+  "More than 10 Miller 3rd-floor offices occupied",
+  "More than 12 cars in the Miller Hall lot",
+  "Candy jar over the threshold",
+  "Football Manager 27 Metascore 78+",
+  "Freeze at Newport News (Nov 9–15)",
+  "Richmond Marathon men's winner under 2:22:00",
+  "Bucknell attendance above Lafayette",
+  "How to Rob a Bank IMDb 7.0+",
+  "Ebenezer Letterboxd 3.5+",
+  "Godzilla Minus Zero Letterboxd lower than Nov 8",
+];
+const NQ = QUESTIONS.length;
+const SOURCES = ["AI chatbot", "Search engine", "News or official site", "Didn't look anything up"];
+const toQ = o => Object.fromEntries(Object.entries(o||{}).map(([q,v])=>[+q-1,v]));
+const PER_SECTION = new Set(Object.values(SECTION_OUTCOMES).flatMap(o=>Object.keys(o).map(k=>+k-1)));
+const W1_PER_SECTION = new Set(Object.values(WEEK1_SECTION_OUTCOMES).flatMap(o=>Object.keys(o).map(k=>+k-1)));
+
+const state = {
+  recs: [], subs: [], w1: null, view: null,
+  shared: OUTCOMES.slice(),
+  bySec: Object.fromEntries(SECTIONS.map(s=>[s.id, toQ(SECTION_OUTCOMES[s.id])])),
+};
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if(c=='"') q=true;
+    else if(c==','){ row.push(cur); cur=""; }
+    else if(c=='\n'||c=='\r'){ if(c=='\r'&&text[i+1]=='\n') i++; row.push(cur); rows.push(row); row=[]; cur=""; }
+    else cur+=c;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=>r.some(x=>x.trim()!==""));
+}
+// Students mix formats (0.85, 85, 85%). Decide the scale per block of 10 answers.
+function parseBlock(cells){
+  const raw = cells.map(c=>{ if(c==null) return null; const t=String(c).trim(); if(t==="") return null;
+    const pct=t.includes("%"); const v=parseFloat(t.replace("%","")); return isFinite(v)?{v,pct}:null; });
+  const asPercent = raw.some(x=>x&&!x.pct&&x.v>1);
+  return raw.map(x=> x ? Math.min(1,Math.max(0,(x.pct||asPercent)? x.v/100 : x.v)) : null);
+}
+const normName = s => String(s||"").trim().replace(/\s+/g," ");
+const nameKey = s => normName(s).toLowerCase();
+const normGroup = s => { const t=String(s||"").trim(); const m=t.match(/\d+/); return m? String(+m[0]) : t.toLowerCase(); };
+function sectionOf(start){
+  const m = String(start||"").match(/(\d{1,2}):(\d{2})/); if(!m) return SECTIONS[0].id;
+  const hm = m[1].padStart(2,"0")+":"+m[2];
+  const s = SECTIONS.find(s=> hm < s.before.padStart(5,"0")); return (s||SECTIONS[SECTIONS.length-1]).id;
+}
+function normSource(v){
+  const t=String(v||"").trim(); if(!t) return null;
+  if(/^\d+$/.test(t)){ const i=+t-1; return SOURCES[i] ?? null; }
+  const hit = SOURCES.find(s=>s.toLowerCase()===t.toLowerCase()) || SOURCES.find(s=>t.toLowerCase().startsWith(s.toLowerCase().slice(0,6)));
+  return hit || t;
+}
+// keys: column prefix per block, e.g. {r1:"R1", r2p:"R2P", r2c:"R2C", r3:"R3"}
+function loadFile(text, keys){
+  const t = parseCSV(text);
+  if(t.length<2) throw new Error("The file has no response rows.");
+  const h = t[0].map(x=>x.trim());
+  const find = re => h.findIndex(x=>re.test(x));
+  const iName=find(/^name$/i), iGroup=find(/^group/i), iStart=find(/^startdate$/i), iRec=find(/^(recordeddate|enddate)$/i), iSrc=find(/^source$/i);
+  if(iName<0) throw new Error('No "Name" column found.');
+  const cols = Object.fromEntries(Object.keys(keys).map(k=>[k, Array(NQ).fill(-1)]));
+  h.forEach((x,i)=>{ const m = x.match(/^\s*([A-Z0-9]+)_(\d{1,2})\s*$/i); if(!m) return;
+    const k = Object.keys(keys).find(k=>keys[k].toLowerCase()===m[1].toLowerCase()); const q=+m[2];
+    if(k && q>=1 && q<=NQ) cols[k][q-1]=i; });
+  if(Object.values(cols).every(a=>a.every(v=>v<0))) throw new Error('No answer columns found. Expected '+Object.values(keys).map(k=>k+"_1").join(", ")+' …');
+  let subs = t.slice(1).map((r,ix)=>({
+    name: normName(r[iName]), group: normGroup(iGroup>=0?r[iGroup]:""), sec: sectionOf(iStart>=0?r[iStart]:""),
+    when: (iRec>=0?r[iRec]:"")||"", order: ix, source: iSrc>=0? normSource(r[iSrc]) : null,
+    blocks: Object.fromEntries(Object.keys(keys).map(k=>[k, parseBlock(cols[k].map(i=>i<0?null:r[i]))])),
+  })).filter(s=> s.name && Object.values(s.blocks).some(b=>b.some(p=>p!=null)));
+  const latest = new Map();
+  subs.forEach(s=>{ const k=nameKey(s.name); const p=latest.get(k); if(!p || s.when>p.when || (s.when===p.when && s.order>p.order)) latest.set(k,s); });
+  const dropped = subs.length - latest.size;
+  return { subs: [...latest.values()].sort((a,b)=>a.order-b.order), dropped };
+}
+
+/* ---------- scoring ---------- */
+const mean = a => { const b=a.filter(x=>x!=null&&isFinite(x)); return b.length? b.reduce((x,y)=>x+y,0)/b.length : null; };
+const wmean = pairs => { let s=0,w=0; pairs.forEach(([v,n])=>{ if(v!=null){ s+=v*n; w+=n; } }); return w? s/w : null; };
+const oc = (sec,i) => PER_SECTION.has(i) ? (state.bySec[sec]?.[i] ?? null) : state.shared[i];
+const sq = (p,o) => (p==null||o==null) ? null : (p-o)**2;
+const brier = (ps,sec,ocf=oc) => mean(ps.map((p,i)=>sq(p,ocf(sec,i))));
+const avgVec = list => [...Array(NQ)].map((_,i)=>mean(list.map(v=>v[i])));
+
+function compute(view){
+  const subs = view==="all" ? state.subs : state.subs.filter(s=>s.sec===view);
+  const secs = [...new Set(subs.map(s=>s.sec))];
+  // teams: members, their R2 team number (averaged across copies), their private average, their R1 average
+  const tm = new Map(); subs.forEach(s=>{ const k=s.sec+"|"+s.group; if(!tm.has(k)) tm.set(k,[]); tm.get(k).push(s); });
+  const teams = [...tm.values()].map(m=>({ sec:m[0].sec, group:m[0].group, n:m.length,
+    team: avgVec(m.map(s=>s.blocks.r2c)), priv: avgVec(m.map(s=>s.blocks.r2p)), r1: avgVec(m.map(s=>s.blocks.r1)), r3: avgVec(m.map(s=>s.blocks.r3)) }));
+  const crowdOf = k => secs.map(s=>{ const a=subs.filter(x=>x.sec===s); return { sec:s, n:a.length, ps:avgVec(a.map(x=>x.blocks[k])) }; });
+  const crowd1 = crowdOf("r1"), crowd3 = crowdOf("r3");
+  const indB = k => mean(subs.map(s=>brier(s.blocks[k], s.sec)));
+  const total = {
+    r1: indB("r1"), crowd: wmean(crowd1.map(c=>[brier(c.ps,c.sec),c.n])),
+    r2p: indB("r2p"), r2c: mean(teams.map(t=>brier(t.team,t.sec))), teamPriv: mean(teams.map(t=>brier(t.priv,t.sec))),
+    r3: indB("r3"), crowd3: wmean(crowd3.map(c=>[brier(c.ps,c.sec),c.n])),
+  };
+  const q = [...Array(NQ)].map((_,i)=>({
+    r1: mean(subs.map(s=>sq(s.blocks.r1[i],oc(s.sec,i)))),
+    crowd: wmean(crowd1.map(c=>[sq(c.ps[i],oc(c.sec,i)),c.n])),
+    r2p: mean(subs.map(s=>sq(s.blocks.r2p[i],oc(s.sec,i)))),
+    r2c: mean(teams.map(t=>sq(t.team[i],oc(t.sec,i)))),
+    r3: mean(subs.map(s=>sq(s.blocks.r3[i],oc(s.sec,i)))),
+  }));
+  const polar = [...Array(NQ)].map((_,i)=>{ const dm=[],dt=[],dp=[];
+    teams.forEach(t=>{ if(t.n<2||t.r1[i]==null||t.team[i]==null) return; dm.push(Math.abs(t.r1[i]-.5)); dt.push(Math.abs(t.team[i]-.5)); if(t.priv[i]!=null) dp.push(Math.abs(t.priv[i]-.5)); });
+    return { members:mean(dm), team:mean(dt), priv:mean(dp) }; });
+  const avg = k => avgVec(subs.map(s=>s.blocks[k]));
+  return { subs, secs, teams, total, q, polar, avg:{r1:avg("r1"), r2p:avg("r2p"), r2c:avgVec(teams.map(t=>t.team)), r3:avg("r3")} };
+}
+
+/* ---------- render ---------- */
+const $=id=>document.getElementById(id);
+const f3=v=> v==null? "—" : v.toFixed(3);
+const pct=v=> v==null? "—" : Math.round(v*100)+"%";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const secName = id => (SECTIONS.find(s=>s.id===id)||{name:id}).name;
+const yn = v => v==null ? "not yet" : v ? "Yes" : "No";
+const signed = v => v==null? "—" : (Math.abs(v)<0.0005? "0.000" : (v<0?"−":"+")+Math.abs(v).toFixed(3));
+
+function renderTabs(){
+  const present = SECTIONS.filter(s=>state.subs.some(r=>r.sec===s.id));
+  const tabs = present.map(s=>({id:s.id, name:s.name, n:state.subs.filter(r=>r.sec===s.id).length}));
+  if(present.length>1) tabs.push({id:"all", name:"Combined", n:state.subs.length});
+  if(!tabs.some(t=>t.id===state.view)) state.view = tabs[0]?.id ?? null;
+  $("tabs").innerHTML = tabs.map(t=>`<button type="button" role="tab" class="tab" id="tab-${t.id}" aria-selected="${t.id===state.view}">${esc(t.name)}<span class="n">${t.n}</span></button>`).join("");
+  tabs.forEach(t=>{ $("tab-"+t.id).onclick=()=>{ state.view=t.id; renderAll(); }; });
+}
+
+function renderOutcomes(){
+  const view=state.view, box=$("outcomes"); box.innerHTML=""; let resolved=0;
+  const present = SECTIONS.filter(s=>state.subs.some(r=>r.sec===s.id));
+  QUESTIONS.forEach((q,i)=>{
+    const d=document.createElement("div"); d.className="oc";
+    if(PER_SECTION.has(i) && view==="all"){
+      d.innerHTML=`<div class="q"><b>Q${i+1}</b>${esc(q)}</div><div class="note">${esc(present.map(s=>`${s.name}: ${yn(oc(s.id,i))}`).join(" · "))}</div>`;
+      if(present.every(s=>oc(s.id,i)!=null)) resolved++;
+    } else {
+      const cur = PER_SECTION.has(i) ? oc(view,i) : state.shared[i]; if(cur!=null) resolved++;
+      d.innerHTML=`<div class="q"><b>Q${i+1}</b>${esc(q)}${PER_SECTION.has(i)?` <span class="muted small">(${esc(secName(view))})</span>`:""}</div><div class="seg" role="group" aria-label="Outcome for question ${i+1}">
+        <button type="button" class="y">Yes</button><button type="button" class="n">No</button><button type="button" class="u" title="Not resolved yet">?</button></div>`;
+      [["y",1],["n",0],["u",null]].forEach(([k,v])=>{ const b=d.querySelector("button."+k); b.setAttribute("aria-pressed", String(cur===v));
+        b.onclick=()=>{ if(PER_SECTION.has(i)) state.bySec[view][i]=v; else state.shared[i]=v; renderAll(); }; });
+    }
+    box.appendChild(d);
+  });
+  $("resolvedCount").textContent = `${resolved} of ${NQ} resolved · clicks here are temporary; edit OUTCOMES in the file to keep them`;
+}
+
+const ROUNDS = [
+  {key:"r1", name:"R1 Individuals", desc:"Each student's own forecast, scored, then averaged", color:"--bar1"},
+  {key:"crowd", name:"R1 Crowd", desc:"Round 1 forecasts averaged, then scored", color:"--barc"},
+  {key:"r2p", name:"R2 Private", desc:"Each student's private forecast after discussion", color:"--bar2"},
+  {key:"r2c", name:"R2 Team", desc:"Each team's agreed number", color:"--bar4"},
+  {key:"r3", name:"R3 Internet", desc:"Each student's own forecast after research", color:"--bar3"},
+];
+
+function renderResults(){
+  const view=state.view, c=compute(view), t=c.total;
+  const counts={r1:c.subs.length, crowd:c.subs.length, r2p:c.subs.length, r2c:c.teams.length, r3:c.subs.filter(s=>s.blocks.r3.some(p=>p!=null)).length};
+  $("tiles").innerHTML = ROUNDS.map(r=>`<div class="tile"><div class="k"><span class="sw" style="background:var(${r.color})"></span>${r.name}</div>
+     <div class="v">${f3(t[r.key])}</div><div class="d">${r.desc} · ${counts[r.key]} ${r.key==="r2c"?"teams":"students"}</div></div>`).join("");
+
+  const vals=ROUNDS.map(r=>t[r.key]);
+  if(vals.every(v=>v==null)){
+    $("chartBox").innerHTML=`<div class="empty">Brier scores appear once at least one outcome is marked. Lower is better; 0.25 is what a 50% guess always scores.</div>`;
+  } else {
+    const W=640,rowH=34,y0=18,left=150,right=64,H=y0+ROUNDS.length*rowH+30;
+    const maxV=Math.max(0.3,...vals.filter(v=>v!=null))*1.08; const x=v=>left+(W-left-right)*v/maxV;
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Average Brier score by round">`;
+    [0,0.1,0.2,0.3,0.4].filter(v=>v<=maxV).forEach(v=>{ s+=`<line x1="${x(v)}" x2="${x(v)}" y1="${y0-4}" y2="${y0+ROUNDS.length*rowH}" stroke="var(--line)"/><text x="${x(v)}" y="${H-8}" font-size="11" text-anchor="middle" style="fill:var(--muted)">${v.toFixed(1)}</text>`; });
+    const c25=x(0.25); s+=`<line x1="${c25}" x2="${c25}" y1="${y0-6}" y2="${y0+ROUNDS.length*rowH}" stroke="var(--gold)" stroke-dasharray="4 3" stroke-width="1.5"/><text x="${c25}" y="${y0-8}" font-size="10" text-anchor="middle" style="fill:var(--gold)">50% guess</text>`;
+    ROUNDS.forEach((r,i)=>{ const v=t[r.key], y=y0+i*rowH;
+      s+=`<text x="${left-10}" y="${y+rowH/2+4}" font-size="13" text-anchor="end">${r.name}</text>`;
+      if(v!=null) s+=`<rect x="${left}" y="${y+6}" width="${Math.max(1,x(v)-left)}" height="${rowH-12}" rx="3" fill="var(${r.color})"/><rect x="${x(v)+3}" y="${y+9}" width="48" height="${rowH-18}" rx="3" fill="var(--surface)"/><text x="${x(v)+6}" y="${y+rowH/2+4}" font-size="12" style="font-family:var(--f-mono)">${v.toFixed(3)}</text>`;
+    });
+    $("chartBox").innerHTML=s+`</svg><div class="small muted" style="margin-top:6px">Average Brier score over the resolved questions. Lower is better.</div>`;
+  }
+  const gap=(a,b)=> (a==null||b==null)?null:a-b;
+  const g=[
+    ["Aggregation", gap(t.r1,t.crowd), "R1 Individuals − R1 Crowd. Averaging independent forecasts can never score worse than the average student."],
+    ["Agreeing vs averaging", gap(t.teamPriv,t.r2c), `The same teams' averaged private forecasts (${f3(t.teamPriv)}) vs the number they agreed on (${f3(t.r2c)}). Same people, same questions: "worse" means arguing to one number did worse than simply averaging.`],
+    ["Discussion", gap(t.r1,t.r2p), "R1 Individuals − R2 Private. What hearing teammates' evidence did to each student's own forecast."],
+    ["Value of information", gap(t.r2p,t.r3), "R2 Private − R3 Internet. Same students; only research was added."],
+  ];
+  $("gaps").innerHTML=g.map(([k,v,d])=>`<div class="gap"><div class="eyebrow">${k}</div><div class="v">${v==null?"—":(v>=0?"−":"+")+Math.abs(v).toFixed(3)}</div><div class="small muted">${v==null?"":v>=0?"Brier improved by this much. ":"Brier got worse by this much. "}${d}</div></div>`).join("");
+
+  // By question
+  const sub = s => `<br><span class="thsub">${s}</span>`;
+  let h=`<thead><tr class="grp"><th></th><th colspan="4" class="gh">Probability of YES (average)</th><th colspan="2" class="gh">Polarization (pts from 50%)</th><th class="gh">Outcome</th><th colspan="5" class="gh">Brier score (lower is better)</th></tr>
+    <tr><th class="l">Question</th><th>R1${sub("Individuals")}</th><th>R2${sub("Private")}</th><th>R2${sub("Team")}</th><th class="sep">R3${sub("Internet")}</th>
+    <th title="Each team's members in Round 1 → the team's agreed number">Members → team</th><th class="sep" title="How far the average of the members' private Round 2 forecasts sat from 50%">Private avg</th>
+    <th class="sep"></th><th>R1${sub("Individuals")}</th><th>R1${sub("Crowd")}</th><th>R2${sub("Private")}</th><th>R2${sub("Team")}</th><th>R3${sub("Internet")}</th></tr></thead><tbody>`;
+  QUESTIONS.forEach((q,i)=>{
+    const qs=c.q[i], keys=["r1","crowd","r2p","r2c","r3"]; const valid=keys.map(k=>qs[k]).filter(v=>v!=null); const best=valid.length?Math.min(...valid):null;
+    let out;
+    if(PER_SECTION.has(i) && view==="all"){ const vs=[...new Set(c.secs.map(s=>oc(s,i)))];
+      out = vs.length===1 ? (vs[0]==null?'<span class="muted">—</span>':vs[0]?'<span class="res-y">Yes</span>':'<span class="res-n">No</span>') : '<span class="res-v">Varies</span>'; }
+    else { const o = PER_SECTION.has(i) ? oc(view,i) : state.shared[i]; out = o==null?'<span class="muted">—</span>':o?'<span class="res-y">Yes</span>':'<span class="res-n">No</span>'; }
+    const P=c.polar[i];
+    h+=`<tr><td class="l"><span class="muted" style="font-family:var(--f-mono)">Q${i+1}</span> ${esc(q)}</td>
+      <td class="num">${pct(c.avg.r1[i])}</td><td class="num">${pct(c.avg.r2p[i])}</td><td class="num">${pct(c.avg.r2c[i])}</td><td class="num sep">${pct(c.avg.r3[i])}</td>
+      <td class="num">${P.members==null?"—":`${Math.round(P.members*100)} → <b>${Math.round(P.team*100)}</b>`}</td><td class="num sep">${P.priv==null?"—":Math.round(P.priv*100)}</td>
+      <td class="sep">${out}</td>${keys.map(k=>`<td class="num ${qs[k]!=null&&qs[k]===best?"best":""}">${f3(qs[k])}</td>`).join("")}</tr>`;
+  });
+  $("qtable").innerHTML=h+"</tbody>";
+
+  renderSources(c); renderCalib(c); renderWeeks(); renderHist(c); renderRankings(c);
+}
+
+function renderSources(c){
+  const rows = SOURCES.map(src=>{ const a=c.subs.filter(s=>s.source===src);
+    const b3=mean(a.map(s=>brier(s.blocks.r3,s.sec))), b2=mean(a.map(s=>brier(s.blocks.r2p,s.sec)));
+    return {src, n:a.length, b2, b3}; });
+  const none = c.subs.filter(s=>!s.source).length;
+  $("stable").innerHTML = `<thead><tr><th class="l">Main source in Round 3</th><th>Students</th><th>R2 Private</th><th>R3 Internet</th><th>Change</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td class="l">${esc(r.src)}</td><td class="num">${r.n}</td><td class="num">${f3(r.b2)}</td><td class="num">${f3(r.b3)}</td><td class="num">${r.b2!=null&&r.b3!=null?signed(r.b3-r.b2):"—"}</td></tr>`).join("")+
+    (none?`<tr><td class="l muted">No source ticked</td><td class="num">${none}</td><td colspan="3"></td></tr>`:"")+"</tbody>";
+}
+
+// Calibration: forecasts on resolved questions, binned by probability, vs how often they came true.
+const calShow = { r1:true, r2p:false, r2c:false, r3:false };
+function renderCalib(c){
+  const box=$("calBox");
+  const sets=[
+    {key:"r1", name:"R1 Individuals", color:"var(--bar1)", ents:c.subs.map(s=>({sec:s.sec, ps:s.blocks.r1}))},
+    {key:"r2p", name:"R2 Private", color:"var(--bar2)", ents:c.subs.map(s=>({sec:s.sec, ps:s.blocks.r2p})), dash:"6 4"},
+    {key:"r2c", name:"R2 Team", color:"var(--bar4)", ents:c.teams.map(t=>({sec:t.sec, ps:t.team})), dash:"2 3"},
+    {key:"r3", name:"R3 Internet", color:"var(--bar3)", ents:c.subs.map(s=>({sec:s.sec, ps:s.blocks.r3}))},
+  ];
+  const edges=[0,0.2,0.4,0.6,0.8,1.0001];
+  const series=sets.map(st=>{ const bins=edges.slice(0,-1).map((lo,b)=>({lo, hi:edges[b+1], ps:[], os:[]}));
+    st.ents.forEach(e=>e.ps.forEach((p,i)=>{ const o=oc(e.sec,i); if(p==null||o==null) return; const b=bins.find(b=>p>=b.lo&&p<b.hi); b.ps.push(p); b.os.push(o); }));
+    return {...st, pts:bins.filter(b=>b.ps.length).map(b=>({x:mean(b.ps), y:mean(b.os), n:b.ps.length, lo:b.lo, hi:Math.min(1,b.hi)}))}; });
+  const nOut = new Set(); c.subs.forEach(s=>{ for(let i=0;i<NQ;i++){ const o=oc(s.sec,i); if(o!=null) nOut.add(PER_SECTION.has(i)? s.sec+"|"+i : String(i)); } });
+  if(!nOut.size){ box.innerHTML=`<div class="empty">The calibration chart appears once outcomes are marked.</div>`; return; }
+  const W=640,H=360,left=56,right=150,y0=24,base=300, pw=W-left-right, ph=base-y0, X=v=>left+pw*v, Y=v=>base-ph*v;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Calibration of forecasts by round">`;
+  [0,0.2,0.4,0.6,0.8,1].forEach(v=>{ s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${y0}" y2="${base}" stroke="var(--line)"/><line x1="${left}" x2="${left+pw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${X(v)}" y="${base+16}" font-size="11" text-anchor="middle" style="fill:var(--muted)">${Math.round(v*100)}%</text><text x="${left-8}" y="${Y(v)+4}" font-size="11" text-anchor="end" style="fill:var(--muted)">${Math.round(v*100)}%</text>`; });
+  s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${X(0.62)}" y="${Y(0.62)-8}" font-size="11" style="fill:var(--gold)" transform="rotate(${-Math.atan(ph/pw)*180/Math.PI} ${X(0.62)} ${Y(0.62)-8})">Perfect calibration</text>`;
+  series.filter(r=>calShow[r.key]).forEach(r=>{ if(r.pts.length>1) s+=`<polyline fill="none" stroke="${r.color}" stroke-width="2" ${r.dash?`stroke-dasharray="${r.dash}"`:""} points="${r.pts.map(p=>`${X(p.x)},${Y(p.y)}`).join(" ")}"/>`;
+    r.pts.forEach(p=>{ s+=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${Math.min(11,3+Math.sqrt(p.n))}" fill="${r.color}" stroke="var(--surface)" stroke-width="1.5"><title>${r.name}: ${p.n} forecasts between ${Math.round(p.lo*100)}% and ${Math.round(p.hi*100)}% (average ${Math.round(p.x*100)}%) came true ${Math.round(p.y*100)}% of the time</title></circle>`; }); });
+  s+=`<text x="${left+pw/2}" y="${base+36}" font-size="12" text-anchor="middle" style="fill:var(--muted)">What the forecast said (probability of YES)</text><text x="16" y="${y0+ph/2}" font-size="12" text-anchor="middle" style="fill:var(--muted)" transform="rotate(-90 16 ${y0+ph/2})">How often it happened</text>`;
+  series.forEach((r,k)=>{ const ly=y0+10+k*42, n=r.pts.reduce((a,p)=>a+p.n,0), on=calShow[r.key];
+    s+=`<g data-cal="${r.key}" role="button" tabindex="0" aria-pressed="${on}" style="cursor:pointer;opacity:${on?1:0.35}"><rect x="${left+pw+6}" y="${ly-14}" width="${W-left-pw-8}" height="38" fill="transparent"/><line x1="${left+pw+12}" x2="${left+pw+32}" y1="${ly}" y2="${ly}" stroke="${r.color}" stroke-width="2" ${r.dash?`stroke-dasharray="${r.dash}"`:""}/><circle cx="${left+pw+22}" cy="${ly}" r="5" fill="${r.color}"/><text x="${left+pw+40}" y="${ly+4}" font-size="12">${r.name}</text><text x="${left+pw+40}" y="${ly+19}" font-size="10" style="fill:var(--muted)">${n} forecasts</text></g>`; });
+  s+=`</svg><div class="small" style="margin-top:8px;display:grid;gap:6px;max-width:72ch">
+    <div><b style="color:var(--gold)">Orange dashed line: perfect calibration.</b> Things called 20% happen 20% of the time, things called 80% happen 80% of the time.</div>
+    <div><b>Each dot</b> is a bucket of forecasts: left–right is what they said on average, height is how often those events happened. Bigger dots hold more forecasts; hover for the count.</div>
+    <div><b>Each line</b> joins one round's dots. Below the orange line: too confident in Yes. Above it: too confident in No. Flatter than the diagonal: overconfident overall.</div>
+    <div class="muted">Based on ${nOut.size} distinct resolved outcome${nOut.size===1?"":"s"}. Many students forecasting the same event are not separate events, so few outcomes make the dots jumpy. Click a round in the legend to show or hide it.</div></div>`;
+  box.innerHTML=s;
+  box.querySelectorAll("[data-cal]").forEach(el=>{ const flip=()=>{ calShow[el.dataset.cal]=!calShow[el.dataset.cal]; renderCalib(c); };
+    el.addEventListener("click", flip); el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); flip(); } }); });
+}
+
+// Week 1 vs week 2: skill = student's R1 Brier − their section's R1 crowd Brier, same questions.
+function skillScores(subs, ocf){
+  const secs=[...new Set(subs.map(s=>s.sec))]; const out=new Map();
+  secs.forEach(sec=>{ const a=subs.filter(s=>s.sec===sec); const crowd=avgVec(a.map(s=>s.blocks.r1));
+    a.forEach(s=>{ const pairs=[...Array(NQ)].map((_,i)=>{ const o=ocf(sec,i); if(o==null||s.blocks.r1[i]==null||crowd[i]==null) return null; return (s.blocks.r1[i]-o)**2-(crowd[i]-o)**2; });
+      out.set(nameKey(s.name), {name:s.name, sec, skill:mean(pairs)}); }); });
+  return out;
+}
+function renderWeeks(){
+  const sec=$("weekSection"); if(!state.w1){ sec.hidden=true; return; } sec.hidden=false;
+  const view=state.view;
+  const w1oc=(s,i)=> W1_PER_SECTION.has(i) ? (toQ(WEEK1_SECTION_OUTCOMES[s])[i] ?? null) : WEEK1_OUTCOMES[i];
+  const s1=skillScores(state.w1, w1oc), s2=skillScores(state.subs, oc);
+  const inView = v => view==="all" || v.sec===view;
+  const both=[...s2.values()].filter(inView).map(v=>({...v, w1:s1.get(nameKey(v.name))?.skill ?? null})).filter(v=>v.w1!=null && v.skill!=null);
+  const a1=mean([...s1.values()].filter(inView).map(v=>v.skill)), a2=mean([...s2.values()].filter(inView).map(v=>v.skill));
+  const improved=both.filter(v=>v.skill<v.w1).length;
+  $("wkTiles").innerHTML = [
+    ["Week 1 average skill", signed(a1), "Round 1, all students that week"],
+    ["Week 2 average skill", signed(a2), "Round 1, all students this week"],
+    ["Improved", both.length?`${improved} of ${both.length}`:"—", "Students in both weeks whose skill score went down (better)"],
+  ].map(([k,v,d])=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+  const show=$("showNames").checked;
+  const rows=both.sort((x,y)=>(x.skill-x.w1)-(y.skill-y.w1));
+  $("wkTable").innerHTML=`<thead><tr><th class="l">Student</th><th>Week 1 skill</th><th>Week 2 skill</th><th>Change</th></tr></thead><tbody>`+
+    (rows.length? rows.map((r,k)=>`<tr><td class="l">${esc(show?r.name:"Student "+(k+1))}</td><td class="num">${signed(r.w1)}</td><td class="num">${signed(r.skill)}</td><td class="num ${r.skill<r.w1?"best":""}">${signed(r.skill-r.w1)}</td></tr>`).join("")
+      : `<tr><td class="l muted" colspan="4">No students matched by name across the two weeks, or outcomes are not marked yet.</td></tr>`)+"</tbody>";
+}
+
+// Histogram: each student's Round 1 Brier, with the crowd and the average team marked.
+function renderHist(c){
+  const box=$("histBox"), t=c.total;
+  const ib=c.subs.map(s=>brier(s.blocks.r1,s.sec)).filter(v=>v!=null);
+  if(!ib.length){ box.innerHTML=`<div class="empty">The histogram of student scores appears once outcomes are marked.</div>`; return; }
+  const w=0.05, hi=Math.max(0.6, Math.ceil(Math.max(...ib, t.r2c??0)/w)*w);
+  const nb=Math.round(hi/w), counts=Array(nb).fill(0); ib.forEach(v=>{ counts[Math.min(nb-1,Math.floor(v/w+1e-9))]++; });
+  const beat=t.crowd==null?0:ib.filter(v=>v>t.crowd).length;
+  const W=640,H=270,left=40,right=16,y0=64,base=220, maxC=Math.max(...counts,1);
+  const x=v=>left+(W-left-right)*v/hi, bw=(W-left-right)/nb, y=n=>base-(base-y0-18)*n/maxC;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Distribution of Round 1 Brier scores"><text x="${left}" y="18" font-size="14" font-weight="600">The crowd average beats ${beat} of ${ib.length} students</text>`;
+  counts.forEach((n,i)=>{ if(!n) return; s+=`<rect x="${x(i*w)+1}" y="${y(n)}" width="${bw-2}" height="${base-y(n)}" rx="2" fill="var(--bar1)"><title>${n} student${n>1?"s":""} scored ${(i*w).toFixed(2)}–${((i+1)*w).toFixed(2)}</title></rect><text x="${x(i*w)+bw/2}" y="${y(n)-4}" font-size="11" text-anchor="middle" style="fill:var(--muted)">${n}</text>`; });
+  s+=`<line x1="${left}" x2="${W-right}" y1="${base}" y2="${base}" stroke="var(--line)"/>`;
+  for(let v=0; v<=hi+1e-9; v+=0.1) s+=`<text x="${x(v)}" y="${base+16}" font-size="11" text-anchor="middle" style="fill:var(--muted)">${v.toFixed(1)}</text>`;
+  s+=`<text x="${left}" y="${base+34}" font-size="11" style="fill:var(--muted)">Each student's Round 1 Brier score (lower is better)</text>`;
+  const mark=(v,color,label,row)=>{ if(v==null) return ""; const X=x(v), ly=36+row*14; return `<line x1="${X}" x2="${X}" y1="${ly+4}" y2="${base}" stroke="${color}" stroke-width="2" stroke-dasharray="${row?'4 3':''}"/><text x="${X+4}" y="${ly}" font-size="11" style="fill:${color}">${label} ${v.toFixed(3)}</text>`; };
+  s+=mark(t.crowd,"var(--gold)","Crowd average",0)+mark(t.r2c,"var(--bar4)","Average team",1);
+  box.innerHTML=s+`</svg><div class="small muted" style="margin-top:6px">Students to the right of the gold line did worse than the class's averaged forecast.</div>`;
+}
+
+function renderRankings(c){
+  const both=state.view==="all";
+  const grows=c.teams.map(t=>({label:`Team ${t.group}`+(both?` · ${secName(t.sec)}`:""), team:brier(t.team,t.sec), priv:brier(t.priv,t.sec), r3:brier(t.r3,t.sec)}))
+    .sort((a,b)=>(a.team??9)-(b.team??9));
+  $("gtable").innerHTML=`<thead><tr><th class="l">Team</th><th>R2 Team</th><th title="Average of the members' private Round 2 forecasts">R2 Private avg</th><th title="Average of the members' Round 3 forecasts">R3 avg</th></tr></thead><tbody>`+
+    (grows.length? grows.map(r=>`<tr><td class="l">${esc(r.label)}</td><td class="num">${f3(r.team)}</td><td class="num ${r.priv!=null&&r.team!=null&&r.priv<r.team?"best":""}">${f3(r.priv)}</td><td class="num">${f3(r.r3)}</td></tr>`).join("")
+      : `<tr><td class="l muted" colspan="4">No team answers.</td></tr>`)+"</tbody>";
+  const show=$("showNames").checked;
+  const irows=c.subs.map((s,k)=>({n: show? s.name : "Student "+(k+1), g:s.group, sec:s.sec, b1:brier(s.blocks.r1,s.sec), b3:brier(s.blocks.r3,s.sec)})).sort((a,b)=>(a.b3??a.b1??9)-(b.b3??b.b1??9));
+  $("itable").innerHTML=`<thead><tr><th>#</th><th class="l">Student</th>${both?"<th>Section</th>":""}<th>Team</th><th>R1</th><th>R3</th></tr></thead><tbody>`+
+    (irows.length? irows.map((r,i)=>`<tr><td class="num">${i+1}</td><td class="l">${esc(r.n)}</td>${both?`<td>${esc(secName(r.sec).replace("Section ","S"))}</td>`:""}<td>${esc(r.g)}</td><td class="num">${f3(r.b1)}</td><td class="num">${f3(r.b3)}</td></tr>`).join("")
+      : `<tr><td class="l muted" colspan="6">No individual answers.</td></tr>`)+"</tbody>";
+}
+
+function renderAll(){ renderTabs(); renderOutcomes(); renderResults(); }
+
+function onWeek2(text,label){
+  try{
+    const res=loadFile(text,{r1:"R1", r2p:"R2P", r2c:"R2C", r3:"R3"});
+    state.subs=res.subs; state.view=null;
+    const secs=SECTIONS.filter(s=>res.subs.some(r=>r.sec===s.id)).map(s=>{ const a=res.subs.filter(r=>r.sec===s.id); return `${s.name}: ${a.length} students, ${new Set(a.map(r=>r.group)).size} teams`; });
+    $("status2").textContent=`${label} · ${secs.join(" · ")}`+(res.dropped?` · ${res.dropped} duplicate submission${res.dropped>1?"s":""} ignored (latest kept)`:""); $("status2").classList.remove("err");
+    $("emptyState").hidden=true; $("report").hidden=false; renderAll();
+    try{ sessionStorage.setItem("fs2-csv", text); sessionStorage.setItem("fs2-label", label); }catch(e){}
+  }catch(e){ $("status2").textContent="Could not read that file. "+e.message; $("status2").classList.add("err"); }
+}
+function onWeek1(text,label){
+  try{
+    const res=loadFile(text,{r1:"R1"}); state.w1=res.subs;
+    $("status1").textContent=`${label} · ${res.subs.length} students`; $("status1").classList.remove("err");
+    if(state.subs.length) renderAll();
+    try{ sessionStorage.setItem("fs2-w1", text); sessionStorage.setItem("fs2-w1label", label); }catch(e){}
+  }catch(e){ $("status1").textContent="Could not read that file. "+e.message; $("status1").classList.add("err"); }
+}
+const reader=(input,fn)=>input.addEventListener("change", e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>fn(String(rd.result), f.name); rd.readAsText(f); e.target.value=""; });
+reader($("file2"), onWeek2); reader($("file1"), onWeek1);
+$("showNames").onchange=()=>renderResults();
+try{ const w1=sessionStorage.getItem("fs2-w1"); if(w1) onWeek1(w1, sessionStorage.getItem("fs2-w1label")||"Restored"); }catch(e){}
+try{ const w2=sessionStorage.getItem("fs2-csv"); if(w2) onWeek2(w2, sessionStorage.getItem("fs2-label")||"Restored"); }catch(e){}
+</script>
+</body>
+</html>
