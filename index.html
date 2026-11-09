@@ -188,25 +188,25 @@ const OUTCOMES = [
   null, // Q7  Zable attendance vs Bucknell higher than vs Lafayette
   null, // Q8  How to Rob a Bank IMDb 7.0+
   null, // Q9  Ebenezer Letterboxd 3.5+
-  null, // Q10 Godzilla Minus Zero Letterboxd lower on Nov 15 than Nov 8
+  null, // Q10 Godzilla Minus Zero Letterboxd lower on Nov 15 than Nov 8 (Nov 8 average: 4.1)
 ];
 
 // Week 2 questions that resolve separately for each section (question number: outcome).
 const SECTION_OUTCOMES = {
-  s1: { 1: null, 2: null, 3: null },   // Q1 offices · Q2 cars · Q3 candy jar, after Section 1
-  s2: { 1: null, 2: null, 3: null },   // the same, after Section 2
+  s1: { 1: null, 2: null, 3: 1 },      // Q1 offices · Q2 cars · Q3 candy jar: 21 pieces (> 20) = YES
+  s2: { 1: null, 2: null, 3: 1 },      // the same, after Section 2 (same jar, 21 pieces)
 };
 
 // Week 1 outcomes, copied from the week 1 dashboard file (used only for the week 1 vs week 2 comparison).
-const WEEK1_OUTCOMES = [null, null, null, null, 1, 0, null, null, null, null];
+const WEEK1_OUTCOMES = [null, null, 1, 0, 1, 0, 1, 1, 0, 1];  // final week 1 results (Q1, Q2 per section below)
 const WEEK1_SECTION_OUTCOMES = { s1: { 1: 1, 2: 1 }, s2: { 1: 0, 2: 0 } };
 
 /* ===================================================================================== */
 
 const QUESTIONS = [
-  "More than 10 Miller 3rd-floor offices occupied",
+  "More than 10 Miller 3rd-floor offices occupied (door open, professor in)",
   "More than 12 cars in the Miller Hall lot",
-  "Candy jar over the threshold",
+  "Candy jar holds more than 20 pieces",
   "Football Manager 27 Metascore 78+",
   "Freeze at Newport News (Nov 9–15)",
   "Richmond Marathon men's winner under 2:22:00",
