@@ -182,19 +182,19 @@ const OUTCOMES = [
   null, // Q1  set per section below
   null, // Q2  set per section below
   null, // Q3  set per section below
-  null, // Q4  Football Manager 27 PC Metascore 78+ on Nov 15
-  null, // Q5  Low of 32°F or below at Newport News, Nov 9–15
-  null, // Q6  Richmond Marathon men's winner under 2:22:00
-  null, // Q7  Zable attendance vs Bucknell higher than vs Lafayette
-  null, // Q8  How to Rob a Bank IMDb 7.0+
-  null, // Q9  Ebenezer Letterboxd 3.5+
-  null, // Q10 Godzilla Minus Zero Letterboxd lower on Nov 15 than Nov 8 (Nov 8 average: 4.1)
+  1,    // Q4  Football Manager 27 PC Metascore 78+ on Nov 15: YES (80)
+  0,    // Q5  Low of 32°F or below at Newport News, Nov 9–15: NO (Williamsburg 2 N low 35°F, Norfolk 41°F, Nov 9–14; confirm Nov 15). Set to null to void.
+  1,    // Q6  Richmond Marathon men's winner under 2:22:00: YES (2:17:48)
+  0,    // Q7  Zable attendance vs Bucknell higher than vs Lafayette: NO (8,734 vs 10,006)
+  0,    // Q8  How to Rob a Bank IMDb 7.0+: NO (6.4)
+  0,    // Q9  Ebenezer Letterboxd 3.5+: NO (3.3)
+  1,    // Q10 Godzilla Minus Zero Letterboxd lower on Nov 15 than Nov 8: YES (4.1 -> 4.0)
 ];
 
 // Week 2 questions that resolve separately for each section (question number: outcome).
 const SECTION_OUTCOMES = {
-  s1: { 1: null, 2: null, 3: 1 },      // Q1 offices · Q2 cars · Q3 candy jar: 21 pieces (> 20) = YES
-  s2: { 1: null, 2: null, 3: 1 },      // the same, after Section 2 (same jar, 21 pieces)
+  s1: { 1: 0, 2: 1, 3: 1 },            // Q1 offices: NO · Q2 cars: YES · Q3 candy jar (21 pieces): YES
+  s2: { 1: 0, 2: 0, 3: 1 },            // Q1 offices: NO · Q2 cars: NO · Q3 candy jar (21 pieces): YES
 };
 
 // Week 1 outcomes, copied from the week 1 dashboard file (used only for the week 1 vs week 2 comparison).
